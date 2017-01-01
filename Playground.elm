@@ -1,3 +1,5 @@
+-- TO DO: Where to decode Json for Patient Model?
+
 module Playground exposing (..) 
 
 import Config exposing (..)
@@ -5,7 +7,7 @@ import Config exposing (..)
 import Http
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Json.Decode exposing (..)
+import Json.Decode as Decode exposing (Decoder, field, succeed)
 
 
 -- ###################################################
@@ -15,13 +17,27 @@ import Json.Decode exposing (..)
 type alias Model = 
     { 
         json : String
+        , patient : Patient
     }
+
+type alias Patient = 
+    { 
+        id : Int
+    }    
 
 initialModel : Model
 initialModel = 
     { 
-        json = ""
+        patient = initialPatient        
+        , json = ""
+
     }
+
+initialPatient : Patient
+initialPatient = 
+    { 
+        id = 0
+    }    
 
 -- ###################################################
 -- ####  UPDATE  #####################################   
@@ -37,9 +53,10 @@ update msg model =
             case result of 
                     Ok jsonData ->
                         let
-                            _ = Debug.log json
+                            _ = Debug.log jsonData
                         in
                             ({ model | json = jsonData }, Cmd.none)
+                            -- ({ model | json = jsonData }, Cmd.none)
                     Err error ->
                         let
                             _ = Debug.log "ERROR: " error
@@ -52,20 +69,14 @@ getJson =
         |> Http.getString
         |> Http.send LoadJson
 
-
-json : String
-json = 
-    """ 
-    { "phrase": "Hello, World!" } 
-    """ 
-
 decoder : Decoder String
 decoder = 
-    field "phrase" string 
+    field "phrase" Decode.string 
 
-decodingResult : Result String String
-decodingResult = 
-    decodeString decoder json
+decodePatient : Decoder Patient
+decodePatient = 
+    Decode.map Patient
+        (field "id" Decode.int)
 
 
 -- ###################################################
